@@ -19,18 +19,21 @@ class TextWrappingPDF(FPDF):
     H_MARGIN = 10.0
     V_MARGIN = 10.0
 
+    BASE_FONT_SIZE = 10
+
     def wrap_text(self, text, orientation="P"):
         self.set_margins(self.V_MARGIN, self.H_MARGIN)
         self.add_page(orientation=orientation)
         self.add_font("courier", "", "Courier_New.ttf", uni=True)
         self.set_xy(self.V_MARGIN, self.H_MARGIN)
-        self.set_font('courier', '', 10)
+        self.set_font('courier', '', self.BASE_FONT_SIZE)
         self.set_text_color(0, 0, 0)
+
         self.multi_cell(
+            # self.A4_W_MM - (self.V_MARGIN * 2),
             self.A4_W_MM - (self.V_MARGIN * 2),
-            self.A4_H_MM - (self.H_MARGIN * 4),
+            (72 / self.BASE_FONT_SIZE) - 3,
             text,
-            align="R",
         )
 
 
@@ -38,8 +41,8 @@ class TextWrappingPDF(FPDF):
 @click.argument("input_text_file", type=click.File("r"), metavar="INPUT.TXT")
 def main(input_text_file):
     wrap_pdf = TextWrappingPDF()
-    # wrap_pdf.wrap_text(input_text_file.read())
-    wrap_pdf.wrap_text(TEST_TEXT)
+    wrap_pdf.wrap_text(input_text_file.read())
+    # wrap_pdf.wrap_text(TEST_TEXT)
     wrap_pdf.output("wrapped.pdf")
 
 
