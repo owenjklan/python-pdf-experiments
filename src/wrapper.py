@@ -29,12 +29,31 @@ class TextWrappingPDF(FPDF):
         self.set_font('courier', '', self.BASE_FONT_SIZE)
         self.set_text_color(0, 0, 0)
 
-        self.multi_cell(
-            # self.A4_W_MM - (self.V_MARGIN * 2),
-            self.A4_W_MM - (self.V_MARGIN * 2),
-            (72 / self.BASE_FONT_SIZE) - 3,
-            text,
-        )
+        cell_height = (72 / self.BASE_FONT_SIZE) * (self.BASE_FONT_SIZE / 16)
+        print(f"Font Size: {self.BASE_FONT_SIZE} pt ({72 / self.BASE_FONT_SIZE} mm) Cell Height: {cell_height} mm")
+        paragraphs = text.split("\n\n")
+
+        for p_num, paragraph in enumerate(paragraphs):
+            line_count = len(paragraph.splitlines())
+            current_y = self.get_y()
+            print(f"{p_num}: {line_count} lines  y={current_y} mm")
+            print(f"Paragraph is {cell_height * line_count} mm high.")
+            print(f"There are {self.A4_H_MM - current_y} mm left in the page.")
+            if cell_height * line_count > self.A4_H_MM - self.H_MARGIN * 2 - current_y:
+                self.add_page(orientation=orientation)
+
+            self.multi_cell(
+                # self.A4_W_MM - (self.V_MARGIN * 2),
+                self.A4_W_MM - (self.V_MARGIN * 2),
+                cell_height,
+                paragraph,
+            )
+            self.cell(
+                self.A4_W_MM - (self.V_MARGIN * 2),
+                cell_height,
+                border=0, ln=1,
+            )
+            print()
 
 
 @click.command()
