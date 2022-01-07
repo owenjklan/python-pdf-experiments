@@ -39,8 +39,10 @@ class TextWrappingPDF(FPDF):
             print(f"{p_num}: {line_count} lines  y={current_y} mm")
             print(f"Paragraph is {cell_height * line_count} mm high.")
             print(f"There are {self.A4_H_MM - current_y} mm left in the page.")
+
             if cell_height * line_count > self.A4_H_MM - self.H_MARGIN * 2 - current_y:
-                self.add_page(orientation=orientation)
+                if p_num != 0:
+                    self.add_page(orientation=orientation)
 
             self.multi_cell(
                 # self.A4_W_MM - (self.V_MARGIN * 2),
