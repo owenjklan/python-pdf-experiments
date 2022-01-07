@@ -189,6 +189,8 @@ def main():
     doc_pdf.hr(thickness=1.0)
 
     doc_pdf.write_paragraph(INTRO_PARAGRAPH, border=1)
+    doc_pdf.write_paragraph("The following paragraph includes some code, in "
+                            "a monospaced font.")
     doc_pdf.write_paragraph(CODE_PARAGRAPH, font="courier")
     doc_pdf.write_paragraph("So, that appears to have worked out nicely. :D")
 
