@@ -77,7 +77,7 @@ class SimplePDFBuilder(FPDF):
         current_y = self.get_y()
         self.set_xy(
             self.DEFAULT_H_MARGIN,
-            current_y + (self.section_title_cell_height * 1.5)
+            current_y + (self.section_title_cell_height * 0.5)
         )
         self.set_to_normal()
 
@@ -94,6 +94,28 @@ class SimplePDFBuilder(FPDF):
             self.normal_text_cell_height,
             "", border=0, ln=1,
         )
+
+    def write_paragraphs(self, paragraphs, font="arial"):
+        self.set_font(font, "", self.DEFAULT_TEXT_SIZE_PT)
+        for p_num, paragraph in enumerate(paragraphs):
+            line_count = len(paragraph.splitlines())
+            current_y = self.get_y()
+
+            if self.normal_text_cell_height * line_count > self.A4_H_MM - self.DEFAULT_H_MARGIN * 2 - current_y:
+                if p_num != 0:
+                    self.add_page()
+
+            self.multi_cell(
+                # self.A4_W_MM - (self.V_MARGIN * 2),
+                self.A4_W_MM - (self.DEFAULT_V_MARGIN * 2),
+                self.normal_text_cell_height,
+                paragraph,
+            )
+            self.cell(
+                self.A4_W_MM - (self.DEFAULT_V_MARGIN * 2),
+                self.normal_text_cell_height,
+                border=0, ln=1,
+            )
 
     def sub_hr(self, thickness=DEFAULT_LINE_WIDTH):
         current_y = self.get_y()
@@ -138,7 +160,7 @@ class SimplePDFBuilder(FPDF):
 
         self.cell(
             self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
-            self.normal_text_cell_height * 0.5,
+            self.normal_text_cell_height,
             "", border=0, ln=1,
         )
         self.set_line_width(self.DEFAULT_LINE_WIDTH)
@@ -157,6 +179,11 @@ CODE_PARAGRAPH = """def wrap_text(self, text, orientation="P"):
     self.set_font('courier', '', self.BASE_FONT_SIZE)
     self.set_text_color(0, 0, 0)"""
 
+CONCLUSION_PARAGRAPH = """FPDF (and PyFPDF) is a library with low-level primitives to easily generate PDF documents. This is similar to ReportLab's graphics canvas, but with some methods to output "fluid" cells ("flowables" that can span multiple rows, pages, tables, columns, etc.). It has several methods ("hooks") that can be redefined, to fine-control headers, footers, etc.
+
+Originally developed in PHP several years ago (as a free alternative to proprietary C libraries), it has been ported to many programming languages, including ASP, C++, Java, Pl/SQL, Ruby, Visual Basic, and of course, Python.
+
+For more information see: http://www.fpdf.org/en/links.php"""
 
 # @click.command()
 # @click.argument("input_text_file", type=click.File("r"), metavar="INPUT.TXT")
@@ -172,12 +199,18 @@ def main():
 
     doc_pdf.hr()
     doc_pdf.write_section_title("Conclusion")
+    paragraphs = CONCLUSION_PARAGRAPH.split("\n\n")
+    doc_pdf.write_paragraphs(paragraphs)
 
     # New page
     doc_pdf.add_page()
     doc_pdf.write_title("Appendices")
     doc_pdf.hr(thickness=1.0)
+    doc_pdf.write_section_title("The Raven - Edgar Allen Poe")
 
+    raven_text = open("raven.txt", "r").read()
+    paragraphs = raven_text.split("\n\n")
+    doc_pdf.write_paragraphs(paragraphs, font="courier")
 
     doc_pdf.output("docbuilder.pdf")
 
