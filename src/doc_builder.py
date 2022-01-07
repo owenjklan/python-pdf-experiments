@@ -27,13 +27,22 @@ class SimplePDFBuilder(FPDF):
     CENTER_ALIGN = "C"
     JUSTIFIED_ALIGN = "J"
 
-    def __init__(self):
+    def __init__(self, format="A4"):
         super().__init__(
             orientation=self.PORTRAIT,
-            format="A4",
+            format=format,
             unit="mm",
         )
         self.set_margins(self.DEFAULT_H_MARGIN, self.DEFAULT_V_MARGIN)
+
+        if format.upper() == "A4":
+            self.page_width = self.A4_W_MM
+            self.page_height = self.A4_H_MM
+        elif format.upper() == "A5":
+            self.page_width = self.A5_W_MM
+            self.page_height = self.A5_H_MM
+        else:
+            raise ValueError(f"Unknown format: {format}")
 
         # Add fonts with Unicode support enabled
         self.add_font("arial", "", "Arial.ttf", uni=True)
@@ -56,7 +65,7 @@ class SimplePDFBuilder(FPDF):
     def write_title(self, title_text):
         self.set_font("arial", "B", self.DEFAULT_DOCUMENT_TITLE_SIZE_PT)
         self.cell(
-            self.A4_W_MM - (self.DEFAULT_V_MARGIN * 2),
+            self.page_width - (self.DEFAULT_V_MARGIN * 2),
             self.title_cell_height,
             title_text,
             ln=1,
@@ -73,7 +82,7 @@ class SimplePDFBuilder(FPDF):
     def write_section_title(self, title_text):
         self.set_font("arial", "B", self.DEFAULT_SECTION_TITLE_SIZE_PT)
         self.cell(
-            self.A4_W_MM - (self.DEFAULT_V_MARGIN * 2),
+            self.page_width - (self.DEFAULT_V_MARGIN * 2),
             self.section_title_cell_height,
             title_text,
             ln=1,
@@ -88,13 +97,13 @@ class SimplePDFBuilder(FPDF):
     def write_paragraph(self, text, border=0, font="arial"):
         self.set_font(font, "", self.DEFAULT_TEXT_SIZE_PT)
         self.multi_cell(
-            self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
+            self.page_width - (self.DEFAULT_H_MARGIN * 2),
             self.normal_text_cell_height,
             text,
             border=border,
         )
         self.cell(
-            self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
+            self.page_width - (self.DEFAULT_H_MARGIN * 2),
             self.normal_text_cell_height,
             "", border=0, ln=1,
         )
@@ -105,19 +114,19 @@ class SimplePDFBuilder(FPDF):
             line_count = len(paragraph.splitlines())
             current_y = self.get_y()
 
-            if self.normal_text_cell_height * line_count > self.A4_H_MM - self.DEFAULT_H_MARGIN * 2 - current_y:
+            if self.normal_text_cell_height * line_count > self.page_height - self.DEFAULT_H_MARGIN * 2 - current_y:
                 if p_num != 0:
                     self.add_page()
 
             self.multi_cell(
                 # self.A4_W_MM - (self.V_MARGIN * 2),
-                self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
+                self.page_width - (self.DEFAULT_H_MARGIN * 2),
                 self.normal_text_cell_height,
                 paragraph,
-                align="J",
+                align=self.JUSTIFIED_ALIGN,
             )
             self.cell(
-                self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
+                self.page_width - (self.DEFAULT_H_MARGIN * 2),
                 self.normal_text_cell_height,
                 border=0, ln=1,
             )
@@ -129,7 +138,7 @@ class SimplePDFBuilder(FPDF):
         self.line(
             self.DEFAULT_H_MARGIN,
             current_y - (self.normal_text_cell_height / 8),
-            self.A4_W_MM - (self.DEFAULT_H_MARGIN),
+            self.page_width - (self.DEFAULT_H_MARGIN),
             current_y - (self.normal_text_cell_height / 8)
         )
 
@@ -183,7 +192,7 @@ For more information see: http://www.fpdf.org/en/links.php"""
 # @click.command()
 # @click.argument("input_text_file", type=click.File("r"), metavar="INPUT.TXT")
 def main():
-    doc_pdf = SimplePDFBuilder()
+    doc_pdf = SimplePDFBuilder(format="A4")
 
     doc_pdf.write_title("Test Title")
     doc_pdf.hr(thickness=1.0)
@@ -216,6 +225,12 @@ def main():
     paragraphs = license_text.split("\n\n")
     doc_pdf.write_paragraphs(paragraphs, font="courier")
 
+    # New page
+    doc_pdf.add_page()
+    doc_pdf.write_section_title("Image Example")
+    doc_pdf.write_paragraph("This appendix demonstrates inclusion of a "
+                            "JPEG file from disk.")
+    doc_pdf.image("line_graph.jpg", w=doc_pdf.page_width - (doc_pdf.DEFAULT_H_MARGIN * 2))
     doc_pdf.output("docbuilder.pdf")
 
 
