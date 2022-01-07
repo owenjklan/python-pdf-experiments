@@ -10,8 +10,8 @@ class SimplePDFBuilder(FPDF):
     A5_W_MM = 148
     A5_H_MM = 210
 
-    DEFAULT_H_MARGIN = 10.0
-    DEFAULT_V_MARGIN = 10.0
+    DEFAULT_H_MARGIN = 20.0
+    DEFAULT_V_MARGIN = 15.0
 
     DEFAULT_DOCUMENT_TITLE_SIZE_PT = 24
     DEFAULT_SECTION_TITLE_SIZE_PT = 18
@@ -55,24 +55,28 @@ class SimplePDFBuilder(FPDF):
 
     def write_title(self, title_text):
         self.set_font("arial", "B", self.DEFAULT_DOCUMENT_TITLE_SIZE_PT)
-        self.multi_cell(
+        self.cell(
             self.A4_W_MM - (self.DEFAULT_V_MARGIN * 2),
             self.title_cell_height,
             title_text,
+            ln=1,
         )
-        current_y = self.get_y()
-        self.set_xy(
-            self.DEFAULT_H_MARGIN,
-            current_y + (self.title_cell_height * 1.5)
-        )
+        self.ln(self.normal_text_cell_height)
+
+        # current_y = self.get_y()
+        # self.set_xy(
+        #     self.DEFAULT_H_MARGIN,
+        #     current_y + (self.title_cell_height * 1.5)
+        # )
         self.set_to_normal()
 
     def write_section_title(self, title_text):
         self.set_font("arial", "B", self.DEFAULT_SECTION_TITLE_SIZE_PT)
-        self.multi_cell(
+        self.cell(
             self.A4_W_MM - (self.DEFAULT_V_MARGIN * 2),
             self.section_title_cell_height,
             title_text,
+            ln=1,
         )
         current_y = self.get_y()
         self.set_xy(
@@ -107,49 +111,20 @@ class SimplePDFBuilder(FPDF):
 
             self.multi_cell(
                 # self.A4_W_MM - (self.V_MARGIN * 2),
-                self.A4_W_MM - (self.DEFAULT_V_MARGIN * 2),
+                self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
                 self.normal_text_cell_height,
                 paragraph,
+                align="J",
             )
             self.cell(
-                self.A4_W_MM - (self.DEFAULT_V_MARGIN * 2),
+                self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
                 self.normal_text_cell_height,
                 border=0, ln=1,
             )
 
-    def sub_hr(self, thickness=DEFAULT_LINE_WIDTH):
-        current_y = self.get_y()
-        self.set_line_width(thickness)
-
-        self.cell(
-            self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
-            self.normal_text_cell_height,
-            "", border=0, ln=1,
-        )
-
-        self.line(
-            self.DEFAULT_H_MARGIN * 2,
-            current_y + self.normal_text_cell_height,
-            self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
-            current_y + self.normal_text_cell_height
-        )
-
-        self.cell(
-            self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
-            self.normal_text_cell_height,
-            "", border=0, ln=1,
-        )
-        self.set_line_width(self.DEFAULT_LINE_WIDTH)
-
     def hr(self, thickness=DEFAULT_LINE_WIDTH):
         current_y = self.get_y()
         self.set_line_width(thickness)
-        #
-        # self.cell(
-        #     self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
-        #     self.normal_text_cell_height * 0.5,
-        #     "", border=0, ln=1,
-        # )
 
         self.line(
             self.DEFAULT_H_MARGIN,
@@ -158,12 +133,32 @@ class SimplePDFBuilder(FPDF):
             current_y - (self.normal_text_cell_height / 8)
         )
 
-        self.cell(
-            self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
-            self.normal_text_cell_height,
-            "", border=0, ln=1,
-        )
+        self.ln()
+
         self.set_line_width(self.DEFAULT_LINE_WIDTH)
+
+    def footer(self):
+        # Go to 1.5 cm from bottom
+        self.set_y(-15)
+        # Select Arial italic 8
+        self.set_font('Arial', 'I', 8)
+        # Print centered page number
+        self.cell(0, 10, 'Page %s' % self.page_no(), 0, 0, 'C')
+
+    # def header(self):
+    #     # Select Arial bold 15
+    #     self.set_font('Arial', 'B', 15)
+    #     # Framed title
+    #     self.cell(
+    #         self.A4_W_MM - (self.DEFAULT_H_MARGIN * 2),
+    #         self.normal_text_cell_height,
+    #         "Document Builder Test Document",
+    #         border=0,
+    #         align="C",
+    #         ln=1,
+    #     )
+    #     # Line break
+    #     self.ln()
 
 
 INTRO_PARAGRAPH = """This is a sample document, created with the 'SimplePDFBuilder()'
@@ -210,6 +205,13 @@ def main():
 
     raven_text = open("raven.txt", "r").read()
     paragraphs = raven_text.split("\n\n")
+    doc_pdf.write_paragraphs(paragraphs, font="courier")
+
+    # New page
+    doc_pdf.add_page()
+    doc_pdf.write_section_title("LICENSE")
+    license_text = open("../LICENSE", "r").read()
+    paragraphs = license_text.split("\n\n")
     doc_pdf.write_paragraphs(paragraphs, font="courier")
 
     doc_pdf.output("docbuilder.pdf")
